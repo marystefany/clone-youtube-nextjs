@@ -1,9 +1,10 @@
 import { makeStyles } from '@material-ui/core/styles';
 import AppBar from '@material-ui/core/AppBar';
-import ToolBar from '@material-ui/core/Toolbar';
+import Toolbar from '@material-ui/core/Toolbar';
 import Box from '@material-ui/core/Box';
 import Paper from '@material-ui/core/Paper';
 import InputBase from '@material-ui/core/InputBase';
+import Avatar from '@material-ui/core/Avatar';
 import Button from '@material-ui/core/Button';
 import IconButton from '@material-ui/core/IconButton';
 import Hidden from '@material-ui/core/Hidden';
@@ -13,12 +14,17 @@ import Apps from '@material-ui/icons/Apps';
 import MoreVert from '@material-ui/icons/MoreVert';
 import VideoCall from '@material-ui/icons/VideoCall';
 import AccountCircle from '@material-ui/icons/AccountCircle';
+import { signIn, signOut, useSession } from 'next-auth/client';
+import Brightness7Icon from '@material-ui/icons/Brightness7';
+import Brightness4Icon from '@material-ui/icons/Brightness4';
+import useSettings from 'src/hooks/useSettings';
+import { THEMES } from 'src/utils/constants';
 
 const useStyles = makeStyles((theme) => ({
   root: {
     boxShadow: 'none',
     zIndex: theme.zIndex.drawer + 1,
-    background: theme.palette.background.default,
+    backgroundColor: theme.palette.background.default,
   },
   toolbar: {
     minHeight: 56,
@@ -45,14 +51,20 @@ const useStyles = makeStyles((theme) => ({
 
 function TopBar() {
   const classes = useStyles();
+  const [session] = useSession();
+  const { settings, saveSettings } = useSettings();
 
   return (
     <AppBar className={classes.root} color="default">
-      <ToolBar className={classes.toolbar}>
+      <Toolbar className={classes.toolbar}>
         <Box display="flex" alignItems="center">
           <MenuIcon />
           <img
-            src="/new-youtube-logo.svg"
+            src={
+              settings.theme === THEMES.DARK
+                ? '/branco.png'
+                : '/new-youtube-logo.svg'
+            }
             alt="logo"
             className={classes.logo}
           />
@@ -73,6 +85,17 @@ function TopBar() {
         </Hidden>
         <Box display="flex">
           <IconButton className={classes.icons}>
+            {settings.theme === THEMES.DARK ? (
+              <Brightness7Icon
+                onClick={() => saveSettings({ theme: THEMES.LIGHT })}
+              />
+            ) : (
+              <Brightness4Icon
+                onClick={() => saveSettings({ theme: THEMES.DARK })}
+              />
+            )}
+          </IconButton>
+          <IconButton className={classes.icons}>
             <VideoCall />
           </IconButton>
           <IconButton className={classes.icons}>
@@ -81,16 +104,28 @@ function TopBar() {
           <IconButton className={classes.icons}>
             <MoreVert />
           </IconButton>
-          <Button
-            color="secondary"
-            component="a"
-            variant="outlined"
-            startIcon={<AccountCircle />}
-          >
-            Fazer Login
-          </Button>
+          {!session ? (
+            <Button
+              color="secondary"
+              component="a"
+              variant="outlined"
+              startIcon={<AccountCircle />}
+              onClick={() => signIn('google')}
+            >
+              Fazer Login
+            </Button>
+          ) : (
+            <Box display="flex" alignItems="center">
+              <Avatar
+                onClick={() => signOut()}
+                alt="User"
+                className={classes.avatar}
+                src={session?.user?.image}
+              />
+            </Box>
+          )}
         </Box>
-      </ToolBar>
+      </Toolbar>
     </AppBar>
   );
 }
